@@ -294,10 +294,9 @@ onMounted(async () => {
         <n-tab-pane name="parsing" tab="Парсинг сайта">
           <n-card>
             <n-space vertical>
-              <p>Нажмите кнопку ниже, чтобы загрузить актуальные данные с сайта azs.astrobl.ru за сегодняшний день.</p>
-              <n-button type="primary" size="large" :loading="parsing" @click="handleParseToday">
-                Спарсить данные за сегодня
-              </n-button>
+              <p>Из-за геоблокировок парсинг сайта azs.astrobl.ru выполняется локально с вашего компьютера.</p>
+              <p>Для обновления данных откройте терминал и выполните команду: <b>npm run parse</b></p>
+              <p>После выполнения скрипта обновите страницу, чтобы увидеть новые данные.</p>
             </n-space>
           </n-card>
         </n-tab-pane>

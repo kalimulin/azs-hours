@@ -18,24 +18,38 @@ const workHoursMap = computed(() => {
   return map
 })
 
-function isHourActive(stationId: string, hour: number): boolean {
+function getHourState(stationId: string, hour: number): 'past' | 'future' | 'inactive' {
   const wh = workHoursMap.value.get(stationId)
-  if (!wh || !wh.is_working || !wh.start_time || !wh.end_time) return false
+  if (!wh || !wh.is_working || !wh.start_time || !wh.end_time) return 'inactive'
 
   const startHour = parseInt(wh.start_time.split(':')[0], 10)
   const endHour = parseInt(wh.end_time.split(':')[0], 10)
 
+  let isActive = false
   if (startHour === endHour) {
-    // Edge case, might mean 24 hours if start==end (e.g. 00:00 to 00:00)
-    // Or 0 hours. We assume 24 hours if is_working is true.
-    return true
-  }
-
-  if (endHour > startHour) {
-    return hour >= startHour && hour < endHour
+    isActive = true
+  } else if (endHour > startHour) {
+    isActive = hour >= startHour && hour < endHour
   } else {
-    // Crosses midnight
-    return hour >= startHour || hour < endHour
+    isActive = hour >= startHour || hour < endHour
+  }
+  
+  if (!isActive) return 'inactive'
+  
+  // Check if the date is today
+  const isToday = wh.date === new Date().toISOString().split('T')[0]
+  const currentHour = new Date().getHours()
+  
+  if (isToday) {
+    return hour < currentHour ? 'past' : 'future'
+  } else {
+    // If it's a past date, all hours are 'past'
+    // If it's a future date, all hours are 'future'
+    const whDate = new Date(wh.date)
+    const todayDate = new Date()
+    todayDate.setHours(0,0,0,0)
+    
+    return whDate < todayDate ? 'past' : 'future'
   }
 }
 
@@ -49,7 +63,7 @@ const columnTotals = computed(() => {
   const totals = new Array(24).fill(0)
   for (const h of hours) {
     for (const s of props.stations) {
-      if (isHourActive(s.id, h)) {
+      if (getHourState(s.id, h) !== 'inactive') {
         totals[h]++
       }
     }
@@ -88,7 +102,7 @@ const grandTotal = computed(() => {
             v-for="h in hours" 
             :key="h" 
             class="hour-cell"
-            :class="{ active: isHourActive(station.id, h) }"
+            :class="[getHourState(station.id, h)]"
             :title="`${station.brand} №${station.station_number} - ${h}:00`"
           ></td>
           <td class="total-cell fw-bold">{{ getStationTotal(station.id) }}</td>
@@ -173,12 +187,16 @@ const grandTotal = computed(() => {
 }
 
 .hour-cell {
-  background-color: #f3f4f6;
+  background-color: #f3f4f6; /* inactive */
   transition: background-color 0.2s;
 }
 
-.hour-cell.active {
-  background-color: #4ade80; /* Green */
+.hour-cell.past {
+  background-color: #18a058; /* Darker green for passed hours */
+}
+
+.hour-cell.future {
+  background-color: #a3e6b5; /* Lighter green for future hours */
 }
 
 .brand-tag {

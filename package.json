@@ -7,12 +7,15 @@
     "dev": "vite",
     "build": "vue-tsc -b && vite build",
     "preview": "vite preview",
-    "type-check": "vue-tsc -b --noEmit"
+    "type-check": "vue-tsc -b --noEmit",
+    "parse": "node scripts/parse.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.49.0",
     "chart.js": "^4.4.0",
+    "cheerio": "^1.2.0",
     "date-fns": "^4.1.0",
+    "dotenv": "^17.4.2",
     "naive-ui": "^2.40.0",
     "pinia": "^3.0.0",
     "vue": "^3.5.0",
