@@ -2,12 +2,12 @@ import { fileURLToPath, URL } from 'node:url'
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 
-export default defineConfig({
+export default defineConfig(({ command }) => ({
   plugins: [vue()],
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
   },
-  base: process.env.NODE_ENV === 'production' ? '/azs-hours/' : '/',
-})
+  base: command === 'build' ? '/azs-hours/' : '/',
+}))
