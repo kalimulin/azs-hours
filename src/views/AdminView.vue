@@ -10,8 +10,9 @@ import {
 import { useAuthStore } from '@/stores/auth'
 import { useStationsStore } from '@/stores/stations'
 import { useWorkHoursStore } from '@/stores/workHours'
-import { format, parse } from 'date-fns'
+import { format, parse, subDays } from 'date-fns'
 import type { Station, WorkHourEntry } from '@/types'
+import { supabase } from '@/lib/supabase'
 
 const router = useRouter()
 const message = useMessage()
@@ -23,6 +24,7 @@ const workHoursStore = useWorkHoursStore()
 
 // State
 const parsing = ref(false)
+const copying = ref(false)
 const selectedDate = ref(Date.now())
 
 // Modals
@@ -230,6 +232,39 @@ async function saveWorkHours() {
   }
 }
 
+async function copyFromPreviousDay() {
+  const prevDate = subDays(new Date(selectedDate.value), 1)
+  const prevDateStr = format(prevDate, 'yyyy-MM-dd')
+  
+  copying.value = true
+  try {
+    const { data, error } = await supabase
+      .from('work_hours')
+      .select('*')
+      .eq('date', prevDateStr)
+      
+    if (error) throw error
+    
+    if (data && data.length > 0) {
+      editableWorkHours.value.forEach(ewh => {
+        const prevDayEntry = data.find((row: any) => row.station_id === ewh.station_id)
+        if (prevDayEntry) {
+          ewh.is_working = prevDayEntry.is_working
+          ewh.start_time = prevDayEntry.start_time ? timeStringToTimestamp(prevDayEntry.start_time) : null
+          ewh.end_time = prevDayEntry.end_time ? timeStringToTimestamp(prevDayEntry.end_time) : null
+        }
+      })
+      message.success('Данные за предыдущий день скопированы. Не забудьте сохранить!')
+    } else {
+      message.warning('Нет данных за предыдущий день.')
+    }
+  } catch (e: any) {
+    message.error(`Ошибка при копировании: ${e.message}`)
+  } finally {
+    copying.value = false
+  }
+}
+
 const workHourColumns = [
   { title: 'АЗС', key: 'station_name' },
   { 
@@ -313,6 +348,9 @@ onMounted(async () => {
                   :clearable="false"
                   @update:value="loadWorkHoursForDate" 
                 />
+                <n-button @click="copyFromPreviousDay" :loading="copying">
+                  Копировать с предыдущего дня
+                </n-button>
               </div>
               
               <n-data-table
