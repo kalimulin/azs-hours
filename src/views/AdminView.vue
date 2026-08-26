@@ -23,7 +23,6 @@ const stationsStore = useStationsStore()
 const workHoursStore = useWorkHoursStore()
 
 // State
-const parsing = ref(false)
 const copying = ref(false)
 const selectedDate = ref(Date.now())
 
@@ -64,19 +63,6 @@ const fuelOptions = [
 async function handleLogout() {
   await authStore.signOut()
   router.push({ name: 'home' })
-}
-
-async function handleParseToday() {
-  parsing.value = true
-  try {
-    const result = await stationsStore.parseToday()
-    message.success(`Парсинг завершен! Обработано АЗС: ${result.total_parsed}`)
-    await loadWorkHoursForDate(selectedDate.value)
-  } catch (e: any) {
-    message.error(`Ошибка парсинга: ${e.message}`)
-  } finally {
-    parsing.value = false
-  }
 }
 
 // --- Stations Management ---
@@ -325,17 +311,6 @@ onMounted(async () => {
 
     <n-layout-content style="padding: 24px; max-width: 1400px; margin: 0 auto;">
       <n-tabs type="line" animated>
-        <!-- Tab 1: Парсинг -->
-        <n-tab-pane name="parsing" tab="Парсинг сайта">
-          <n-card>
-            <n-space vertical>
-              <p>Из-за геоблокировок парсинг сайта azs.astrobl.ru выполняется локально с вашего компьютера.</p>
-              <p>Для обновления данных откройте терминал и выполните команду: <b>npm run parse</b></p>
-              <p>После выполнения скрипта обновите страницу, чтобы увидеть новые данные.</p>
-            </n-space>
-          </n-card>
-        </n-tab-pane>
-
         <!-- Tab 2: Ручной ввод -->
         <n-tab-pane name="manual" tab="Ручной ввод часов работы">
           <n-card>
